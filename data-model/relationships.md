@@ -1,15 +1,15 @@
- Связи модели данных DiceBound
+# Связи модели данных DiceBound
 
- Назначение
+## Назначение
 
 Этот документ описывает связи между основными сущностями модели данных
 DiceBound, их cardinality, обязательность, правила удаления и правила
 сохранения истории.
 
-Документ относится к универсальному ядру DiceBound и не вводит RPG-specific
-таблицы вроде `skills`, `spells`, `items`, `races` или `classes`.
+Документ относится к универсальному ядру DiceBound и не вводит специфичные для
+RPG таблицы вроде `skills`, `spells`, `items`, `races` или `classes`.
 
- Основные сущности
+## Основные сущности
 
 В документе используются следующие сущности:
 
@@ -20,10 +20,10 @@ DiceBound, их cardinality, обязательность, правила уда
 - `CharacterVersion`
 - `Share`
 
- Принципы связей
+## Принципы связей
 
 - Владение, связи, права доступа и версии хранятся реляционно.
-- Foreign keys не хранятся внутри `JSONB`.
+- Внешние ключи не хранятся внутри `JSONB`.
 - `SystemVersion.schema` описывает структуру листа персонажа.
 - `CharacterVersion.data` хранит значения конкретного состояния персонажа.
 - Каждая `CharacterVersion` должна ссылаться на `SystemVersion`, чтобы старые
@@ -31,24 +31,62 @@ DiceBound, их cardinality, обязательность, правила уда
 - Исторические записи `SystemVersion` и `CharacterVersion` не должны молча
   переписываться или удаляться обычным пользовательским изменением.
 
- Сводная таблица связей
+## Сводка связей
 
-| Связь | Cardinality | Обязательность | FK | Назначение |
-| --- | --- | --- | --- | --- |
-| `User -> GameSystem` | `1:N` | Обязательная для `GameSystem` | `game_systems.owner_id -> users.id` | Владелец RPG-системы |
-| `User -> Character` | `1:N` | Обязательная для `Character` | `characters.owner_id -> users.id` | Владелец персонажа |
-| `GameSystem -> SystemVersion` | `1:N` | Обязательная для `SystemVersion` | `system_versions.game_system_id -> game_systems.id` | Версии RPG-системы |
-| `GameSystem -> Character` | `1:N` | Обязательная для `Character` | `characters.game_system_id -> game_systems.id` | RPG-система персонажа |
-| `Character -> CharacterVersion` | `1:N` | Обязательная для `CharacterVersion` | `character_versions.character_id -> characters.id` | История состояний персонажа |
-| `SystemVersion -> CharacterVersion` | `1:N` | Обязательная для `CharacterVersion` | `character_versions.system_version_id -> system_versions.id` | Схема для интерпретации состояния персонажа |
-| `User -> CharacterVersion` | `1:N` | Необязательная для `CharacterVersion` | `character_versions.created_by_user_id -> users.id` | Автор изменения, если отслеживается |
-| `Character -> Share` | `1:N` | Обязательная для `Share` | `shares.character_id -> characters.id` | Доступы к персонажу |
-| `User -> Share` | `1:N` | Обязательная для `Share` | `shares.user_id -> users.id` | Пользователь, получивший доступ |
-| `Character -> User` через `Share` | `N:M` | Необязательная для `Character` | `shares.character_id`, `shares.user_id` | Совместный доступ к персонажу |
+- `User -> GameSystem`
+  - Cardinality: `1:N`
+  - Обязательность: обязательная для `GameSystem`
+  - FK: `game_systems.owner_id -> users.id`
+  - Назначение: владелец RPG-системы
+- `User -> Character`
+  - Cardinality: `1:N`
+  - Обязательность: обязательная для `Character`
+  - FK: `characters.owner_id -> users.id`
+  - Назначение: владелец персонажа
+- `GameSystem -> SystemVersion`
+  - Cardinality: `1:N`
+  - Обязательность: обязательная для `SystemVersion`
+  - FK: `system_versions.game_system_id -> game_systems.id`
+  - Назначение: версии RPG-системы
+- `GameSystem -> Character`
+  - Cardinality: `1:N`
+  - Обязательность: обязательная для `Character`
+  - FK: `characters.game_system_id -> game_systems.id`
+  - Назначение: RPG-система персонажа
+- `Character -> CharacterVersion`
+  - Cardinality: `1:N`
+  - Обязательность: обязательная для `CharacterVersion`
+  - FK: `character_versions.character_id -> characters.id`
+  - Назначение: история состояний персонажа
+- `SystemVersion -> CharacterVersion`
+  - Cardinality: `1:N`
+  - Обязательность: обязательная для `CharacterVersion`
+  - FK: `character_versions.system_version_id -> system_versions.id`
+  - Назначение: схема для интерпретации состояния персонажа
+- `User -> CharacterVersion`
+  - Cardinality: `1:N`
+  - Обязательность: необязательная для `CharacterVersion`
+  - FK: `character_versions.created_by_user_id -> users.id`
+  - Назначение: автор изменения, если отслеживается
+- `Character -> Share`
+  - Cardinality: `1:N`
+  - Обязательность: обязательная для `Share`
+  - FK: `shares.character_id -> characters.id`
+  - Назначение: доступы к персонажу
+- `User -> Share`
+  - Cardinality: `1:N`
+  - Обязательность: обязательная для `Share`
+  - FK: `shares.user_id -> users.id`
+  - Назначение: пользователь, получивший доступ
+- `Character -> User` через `Share`
+  - Cardinality: `N:M`
+  - Обязательность: необязательная для `Character`
+  - FK: `shares.character_id`, `shares.user_id`
+  - Назначение: совместный доступ к персонажу
 
- Обязательные и необязательные связи
+## Обязательные и необязательные связи
 
- Обязательные связи
+### Обязательные связи
 
 Эти связи должны существовать для каждой дочерней записи:
 
@@ -64,7 +102,7 @@ DiceBound, их cardinality, обязательность, правила уда
 - `Share` должен быть связан с персонажем: `shares.character_id`.
 - `Share` должен быть связан с пользователем-получателем: `shares.user_id`.
 
- Необязательные связи
+### Необязательные связи
 
 Эти связи могут отсутствовать:
 
@@ -81,9 +119,9 @@ DiceBound, их cardinality, обязательность, правила уда
   если персонаж создан как черновик. Для сохраненного состояния нужна как
   минимум одна `CharacterVersion`.
 
- Подробное описание связей
+## Подробное описание связей
 
- User 1:N GameSystem
+### User 1:N GameSystem
 
 Один пользователь может владеть несколькими RPG-системами.
 
@@ -104,7 +142,7 @@ Cardinality:
 - автоматическое каскадное удаление `GameSystem` нежелательно, потому что за
   ней могут находиться `SystemVersion`, `Character` и исторические данные.
 
- User 1:N Character
+### User 1:N Character
 
 Один пользователь может владеть несколькими персонажами.
 
@@ -124,7 +162,7 @@ Cardinality:
 - персонажи и их версии не должны теряться из-за случайного удаления
   пользователя.
 
- GameSystem 1:N SystemVersion
+### GameSystem 1:N SystemVersion
 
 Одна RPG-система может иметь несколько версий.
 
@@ -158,7 +196,7 @@ UNIQUE (game_system_id, version_number)
 - изменение структуры RPG-системы должно создавать новую `SystemVersion`;
 - уже используемая `SystemVersion.schema` не должна молча переписываться.
 
- GameSystem 1:N Character
+### GameSystem 1:N Character
 
 Один персонаж создается в рамках одной RPG-системы.
 
@@ -183,7 +221,7 @@ Cardinality:
   через `characters.game_system_id`, а через
   `character_versions.system_version_id`.
 
- Character 1:N CharacterVersion
+### Character 1:N CharacterVersion
 
 `Character` является стабильной сущностью персонажа, а `CharacterVersion`
 хранит конкретные исторические состояния.
@@ -217,7 +255,7 @@ UNIQUE (character_id, version_number)
 - старые `CharacterVersion` не должны перезаписываться обычным обновлением;
 - старые версии могут использоваться для истории, сравнения, отката и аудита.
 
- SystemVersion 1:N CharacterVersion
+### SystemVersion 1:N CharacterVersion
 
 Каждая версия персонажа должна знать, по какой версии RPG-системы нужно
 интерпретировать ее `data JSONB`.
@@ -246,7 +284,7 @@ Cardinality:
   создания версии персонажа;
 - новая версия RPG-системы не должна менять смысл старых версий персонажей.
 
- User 1:N CharacterVersion
+### User 1:N CharacterVersion
 
 Эта связь используется, если модель отслеживает автора конкретного изменения
 персонажа.
@@ -269,7 +307,7 @@ Cardinality:
   или выставлять `created_by_user_id` в `NULL`, если это не нарушает требования
   аудита.
 
- Character 1:N Share
+### Character 1:N Share
 
 `Share` описывает доступ другого пользователя к персонажу.
 
@@ -292,7 +330,7 @@ Cardinality:
 - физическое удаление персонажа вместе с `Share` допустимо только в рамках
   отдельной политики окончательного удаления данных.
 
- User 1:N Share
+### User 1:N Share
 
 `Share.user_id` указывает пользователя, которому выдан доступ.
 
@@ -318,7 +356,7 @@ UNIQUE (character_id, user_id)
   быть удалены или деактивированы;
 - удаление `Share` не должно удалять `Character` или `User`.
 
- Character N:M User через Share
+### Character N:M User через Share
 
 Многие пользователи могут иметь доступ ко многим персонажам через `Share`.
 
@@ -345,18 +383,18 @@ Permission:
 - отзыв доступа не влияет на владельца персонажа;
 - отзыв доступа не удаляет версии персонажа.
 
- Правила удаления
+## Правила удаления
 
 Для ядра DiceBound рекомендуется консервативная политика удаления:
 
-| Сущность | Рекомендуемое правило |
-| --- | --- |
-| `User` | Soft delete или запрет удаления при наличии связанных данных |
-| `GameSystem` | Soft delete или запрет удаления при наличии `SystemVersion` / `Character` |
-| `SystemVersion` | Запрет удаления, если используется в `CharacterVersion` |
-| `Character` | Soft delete или запрет физического удаления при наличии `CharacterVersion` |
-| `CharacterVersion` | Не удалять обычными пользовательскими изменениями |
-| `Share` | Можно удалить или деактивировать при отзыве доступа |
+- `User`: soft delete или запрет удаления при наличии связанных данных.
+- `GameSystem`: soft delete или запрет удаления при наличии связанных
+  `SystemVersion` или `Character`.
+- `SystemVersion`: запрет удаления, если используется в `CharacterVersion`.
+- `Character`: soft delete или запрет физического удаления при наличии
+  `CharacterVersion`.
+- `CharacterVersion`: не удалять обычными пользовательскими изменениями.
+- `Share`: можно удалить или деактивировать при отзыве доступа.
 
 Каскадное удаление нежелательно для сущностей, которые участвуют в истории:
 
@@ -364,9 +402,9 @@ Permission:
 - `Character`
 - `CharacterVersion`
 
- Правила сохранения истории
+## Правила сохранения истории
 
- История RPG-систем
+### История RPG-систем
 
 `SystemVersion` является исторической версией структуры RPG-системы.
 
@@ -377,7 +415,7 @@ Permission:
   существующих `CharacterVersion`;
 - старые `CharacterVersion` продолжают ссылаться на старую `SystemVersion`.
 
- История персонажей
+### История персонажей
 
 `CharacterVersion` является историческим снимком состояния персонажа.
 
@@ -389,7 +427,7 @@ Permission:
   `SystemVersion.schema`;
 - старые версии не перезаписываются обычным обновлением.
 
- Проверка на непротиворечивость
+## Проверка на непротиворечивость
 
 Модель связей не противоречит списку основных сущностей:
 
