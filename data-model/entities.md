@@ -378,6 +378,8 @@ CHECK (permission IN ('view', 'edit'))
 
 ## Связи между сущностями
 
+## Связи между сущностями
+
 Основные связи модели:
 
 `User` 1:N `GameSystem` — владеет RPG-системами
@@ -388,8 +390,8 @@ CHECK (permission IN ('view', 'edit'))
 `User` 1:N `Share` — имеет разрешения
 `Character` 1:N `Share` — предоставляет доступ
 `Character` N:M `User` — через `Share`
----
 
+---
 ## Relational and JSONB storage
 
 Модель использует комбинацию обычных реляционных полей
