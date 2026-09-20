@@ -380,20 +380,14 @@ CHECK (permission IN ('view', 'edit'))
 
 Основные связи модели:
 
-| Сущность | Кардинальность | Сущность | Описание |
-| --- | --- | --- | --- |
-| `User` | 1:N | `GameSystem` | Пользователь может владеть несколькими
- RPG-системами |
-| `User` | 1:N | `Character` | Пользователь может владеть несколькими
- персонажами |
-| `GameSystem` | 1:N | `SystemVersion` | RPG-система имеет несколько версий |
-| `Character` | 1:N | `CharacterVersion` | Персонаж имеет историю изменений |
-| `SystemVersion` | 1:N | `CharacterVersion` | Версия системы
- используется версиями персонажей |
-| `User` | 1:N | `Share` | Пользователь может иметь много разрешений |
-| `Character` | 1:N | `Share` | Персонажу может быть предоставлен доступ |
-| `Character` | N:M | `User` | Связь реализуется через `Share` |
-
+`User` 1:N `GameSystem` — владеет RPG-системами
+`User` 1:N `Character` — владеет персонажами
+`GameSystem` 1:N `SystemVersion` — имеет версии
+`Character` 1:N `CharacterVersion` — имеет историю
+`SystemVersion` 1:N `CharacterVersion` — используется версиями
+`User` 1:N `Share` — имеет разрешения
+`Character` 1:N `Share` — предоставляет доступ
+`Character` N:M `User` — через `Share`
 ---
 
 ## Relational and JSONB storage
