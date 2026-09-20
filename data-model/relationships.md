@@ -35,27 +35,16 @@ DiceBound, их cardinality, обязательность, правила уда
 
 | Связь | Cardinality | Обязательность | FK | Назначение |
 | --- | --- | --- | --- | --- |
-| `User -> GameSystem` | `1:N` | Обязательная для `GameSystem` | `game_systems.owner_id -> users.id` | 
-Владелец RPG-системы |
-| `User -> Character` | `1:N` | Обязательная для `Character` | `characters.owner_id -> users.id` | 
-Владелец персонажа |
-| `GameSystem -> SystemVersion` | `1:N` | Обязательная для `SystemVersion` | 
-`system_versions.game_system_id -> game_systems.id` | Версии RPG-системы |
-| `GameSystem -> Character` | `1:N` | Обязательная для `Character` | `characters.game_system_id -> 
-game_systems.id` | RPG-система персонажа |
-| `Character -> CharacterVersion` | `1:N` | Обязательная для `CharacterVersion` | 
-`character_versions.character_id -> characters.id` | История состояний персонажа |
-| `SystemVersion -> CharacterVersion` | `1:N` | Обязательная для `CharacterVersion` | 
-`character_versions.system_version_id -> system_versions.id` | Схема для интерпретации состояния 
-персонажа |
-| `User -> CharacterVersion` | `1:N` | Необязательная для `CharacterVersion` | 
-`character_versions.created_by_user_id -> users.id` | Автор изменения, если отслеживается |
-| `Character -> Share` | `1:N` | Обязательная для `Share` | `shares.character_id -> characters.id` | 
-Доступы к персонажу |
-| `User -> Share` | `1:N` | Обязательная для `Share` | `shares.user_id -> users.id` | Пользователь, 
-получивший доступ |
-| `Character -> User` через `Share` | `N:M` | Необязательная для `Character` | `shares.character_id`, 
-`shares.user_id` | Совместный доступ к персонажу |
+| `User -> GameSystem` | `1:N` | Обязательная для `GameSystem` | `game_systems.owner_id -> users.id` | Владелец RPG-системы |
+| `User -> Character` | `1:N` | Обязательная для `Character` | `characters.owner_id -> users.id` | Владелец персонажа |
+| `GameSystem -> SystemVersion` | `1:N` | Обязательная для `SystemVersion` | `system_versions.game_system_id -> game_systems.id` | Версии RPG-системы |
+| `GameSystem -> Character` | `1:N` | Обязательная для `Character` | `characters.game_system_id -> game_systems.id` | RPG-система персонажа |
+| `Character -> CharacterVersion` | `1:N` | Обязательная для `CharacterVersion` | `character_versions.character_id -> characters.id` | История состояний персонажа |
+| `SystemVersion -> CharacterVersion` | `1:N` | Обязательная для `CharacterVersion` | `character_versions.system_version_id -> system_versions.id` | Схема для интерпретации состояния персонажа |
+| `User -> CharacterVersion` | `1:N` | Необязательная для `CharacterVersion` | `character_versions.created_by_user_id -> users.id` | Автор изменения, если отслеживается |
+| `Character -> Share` | `1:N` | Обязательная для `Share` | `shares.character_id -> characters.id` | Доступы к персонажу |
+| `User -> Share` | `1:N` | Обязательная для `Share` | `shares.user_id -> users.id` | Пользователь, получивший доступ |
+| `Character -> User` через `Share` | `N:M` | Необязательная для `Character` | `shares.character_id`, `shares.user_id` | Совместный доступ к персонажу |
 
  Обязательные и необязательные связи
 
@@ -363,11 +352,9 @@ Permission:
 | Сущность | Рекомендуемое правило |
 | --- | --- |
 | `User` | Soft delete или запрет удаления при наличии связанных данных |
-| `GameSystem` | Soft delete или запрет удаления при наличии 
-`SystemVersion` / `Character` |
+| `GameSystem` | Soft delete или запрет удаления при наличии `SystemVersion` / `Character` |
 | `SystemVersion` | Запрет удаления, если используется в `CharacterVersion` |
-| `Character` | Soft delete или запрет физического удаления при наличии 
-`CharacterVersion` |
+| `Character` | Soft delete или запрет физического удаления при наличии `CharacterVersion` |
 | `CharacterVersion` | Не удалять обычными пользовательскими изменениями |
 | `Share` | Можно удалить или деактивировать при отзыве доступа |
 
