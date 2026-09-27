@@ -1,160 +1,177 @@
 # ERD DiceBound
 
 Документ содержит принципиальную ERD актуальной модели данных MVP DiceBound.
-Диаграмма показывает основные таблицы, PK, FK и cardinality между сущностями.
 
-## ERD
+Диаграмма показывает основные сущности, ключи и cardinality.
 
 ```mermaid
 erDiagram
-    direction LR
+    USER ||--o{ GAME_SYSTEM : owns
+    USER ||--o{ CHARACTER : owns
+    USER ||--o{ CHARACTER_SHARE : receives
 
-    USER ||--o{ GAME_SYSTEM : "owner_id -> id"
-    USER ||--o{ CHARACTER : "owner_id -> id"
-    USER ||--o{ CHARACTER_SHARE : "user_id -> id"
+    GAME_SYSTEM ||--o{ SHEET_SCHEMA : defines
+    GAME_SYSTEM ||--o{ CHARACTER : uses
+    SHEET_SCHEMA ||--o{ CHARACTER : defines
 
-    GAME_SYSTEM ||--o{ SHEET_SCHEMA : "game_system_id -> id"
-    GAME_SYSTEM ||--o{ CHARACTER : "game_system_id -> id"
-
-    SHEET_SCHEMA ||--o{ CHARACTER : "sheet_schema_id -> id"
-
-    CHARACTER ||--o{ CHARACTER_VERSION : "character_id -> id"
-    CHARACTER ||--o{ CHARACTER_SHARE : "character_id -> id"
+    CHARACTER ||--o{ CHARACTER_VERSION : has
+    CHARACTER ||--o{ CHARACTER_SHARE : shares
 
     USER {
-        field id PK
+        uuid id PK
     }
 
     GAME_SYSTEM {
-        field id PK
-        field owner_id FK
+        uuid id PK
+        uuid owner_id FK
+        string name
+        timestamp created_at
     }
 
     SHEET_SCHEMA {
-        field id PK
-        field game_system_id FK
+        uuid id PK
+        uuid game_system_id FK
+        string name
         jsonb schema
+        timestamp created_at
     }
 
     CHARACTER {
-        field id PK
-        field owner_id FK
-        field game_system_id FK
-        field sheet_schema_id FK
+        uuid id PK
+        uuid owner_id FK
+        uuid game_system_id FK
+        uuid sheet_schema_id FK
+        string name
         jsonb data
+        timestamp created_at
+        timestamp updated_at
     }
 
     CHARACTER_VERSION {
-        field id PK
-        field character_id FK
-        field version_number
+        uuid id PK
+        uuid character_id FK
+        integer version_number
         jsonb data
+        timestamp created_at
     }
 
     CHARACTER_SHARE {
-        field id PK
-        field character_id FK
-        field user_id FK
-        field permission
-    }
+        uuid id PK
+        uuid character_id FK
+        uuid user_id FK
+        string permission
+        timestamp created_at
 ```
 
-В диаграмме `field` используется как нейтральное обозначение поля.
-Фактические SQL-типы полей не являются частью данной принципиальной ERD.
+## Сущности
 
-## Сущности и ключи
+В ERD используются шесть основных таблиц MVP.
+
+| Таблица | Назначение |
+| --- | --- |
+| `User` | Пользователь системы. |
+| `GameSystem` | Игровая система. |
+| `SheetSchema` | Схема листа персонажа. |
+| `Character` | Текущие данные персонажа. |
+| `CharacterVersion` | Снимок персонажа при сохранении. |
+| `CharacterShare` | Доступ пользователя к персонажу. |
+
+## Ключи
+
+PK и основные FK представлены в следующей таблице.
 
 | Таблица | PK | FK |
-|---|---|---|
+| --- | --- | --- |
 | `User` | `id` | — |
-| `GameSystem` | `id` | `owner_id -> User.id` |
-| `SheetSchema` | `id` | `game_system_id -> GameSystem.id` |
-| `Character` | `id` | `owner_id -> User.id`, `game_system_id -> GameSystem.id`, `sheet_schema_id -> SheetSchema.id` |
-| `CharacterVersion` | `id` | `character_id -> Character.id` |
-| `CharacterShare` | `id` | `character_id -> Character.id`, `user_id -> User.id` |
+| `GameSystem` | `id` | `owner_id` |
+| `SheetSchema` | `id` | `game_system_id` |
+| `Character` | `id` | `owner_id`, `game_system_id`, `sheet_schema_id` |
+| `CharacterVersion` | `id` | `character_id` |
+| `CharacterShare` | `id` | `character_id`, `user_id` |
 
-## Связи и cardinality
+### Cardinality
 
-| Связь | Cardinality | FK |
-|---|---|---|
-| `User -> GameSystem` | `1:N` | `game_systems.owner_id -> users.id` |
-| `User -> Character` | `1:N` | `characters.owner_id -> users.id` |
-| `User -> CharacterShare` | `1:N` | `character_shares.user_id -> users.id` |
-| `GameSystem -> SheetSchema` | `1:N` | `sheet_schemas.game_system_id -> game_systems.id` |
-| `GameSystem -> Character` | `1:N` | `characters.game_system_id -> game_systems.id` |
-| `SheetSchema -> Character` | `1:N` | `characters.sheet_schema_id -> sheet_schemas.id` |
-| `Character -> CharacterVersion` | `1:N` | `character_versions.character_id -> characters.id` |
-| `Character -> CharacterShare` | `1:N` | `character_shares.character_id -> characters.id` |
+Основные связи имеют следующую cardinality.
 
-## Связь Character
+| Связь | Cardinality |
+| --- | --- |
+| `User` -> `GameSystem` | 1:N |
+| `User` -> `Character` | 1:N |
+| `User` -> `CharacterShare` | 1:N |
+| `GameSystem` -> `SheetSchema` | 1:N |
+| `GameSystem` -> `Character` | 1:N |
+| `SheetSchema` -> `Character` | 1:N |
+| `Character` -> `CharacterVersion` | 1:N |
+| `Character` -> `CharacterShare` | 1:N |
 
-`Character` связан с тремя основными сущностями MVP.
+## Character
 
-`Character.owner_id` определяет владельца персонажа через `User.id`.
-`Character.game_system_id` определяет используемую игровую систему через `GameSystem.id`.
-`Character.sheet_schema_id` определяет конкретную структуру листа через `SheetSchema.id`.
+`Character` связан с владельцем через `owner_id`.
 
-Таким образом, основная цепочка модели MVP имеет вид:
+`Character` связан с `GameSystem` через `game_system_id`.
 
-```text
-User
-  |
-  +---- GameSystem
-  |        |
-  |        +---- SheetSchema
-  |                 |
-  +-----------------+---- Character
-                              |
-                              +---- CharacterVersion
-                              |
-                              +---- CharacterShare
-```
+`Character` связан с конкретным `SheetSchema` через
+`sheet_schema_id`.
 
-`Character` напрямую хранит ссылки на `User`, `GameSystem` и `SheetSchema`.
-Связь `GameSystem -> SheetSchema -> Character` не заменяет прямую связь `Character -> GameSystem`.
+Текущие данные персонажа хранятся в поле `data` типа JSONB.
 
 ## CharacterVersion
 
-`CharacterVersion` хранит версии данных конкретного `Character`.
-Каждая запись `CharacterVersion` связана с одним `Character` через `character_id`.
-Поле `data` содержит полный снимок данных персонажа.
+`CharacterVersion` связан с `Character` через `character_id`.
 
-В MVP новая версия создаётся при логическом сохранении персонажа.
-Восстановление предыдущей версии не создаёт новую запись `CharacterVersion`.
-При восстановлении удаляются версии, созданные после выбранной версии.
+Каждая версия содержит полный снимок данных персонажа в поле `data`.
+
+Новая версия создаётся при логическом сохранении персонажа.
+
+При восстановлении версии более поздние версии удаляются.
+
+Восстановление не создаёт новую версию.
 
 ## CharacterShare
 
-`CharacterShare` хранит связь персонажа с пользователем, которому предоставлен доступ.
-Запись связана с `Character` через `character_id` и с `User` через `user_id`.
-Для пары `character_id` и `user_id` действует ограничение уникальности.
+`CharacterShare` связывает персонажа с пользователем, которому
+предоставлен доступ.
 
-`VIEW` предоставляет доступ к просмотру исходного `Character`.
-`EDIT` в MVP не предоставляет право редактировать исходный `Character`.
-При `EDIT` для получателя создаётся отдельная копия `Character` со своей историей версий.
+Поле `permission` определяет уровень доступа.
+
+При VIEW пользователь получает доступ только для чтения.
+
+При EDIT создаётся отдельная копия `Character` для получателя.
+
+Копия имеет собственные данные и историю версий.
 
 ## SheetSchema
 
-`SheetSchema` определяет структуру листа персонажа для конкретного `GameSystem`.
-Поле `schema` хранит описание структуры в `JSONB`.
-`Character` ссылается на конкретный `SheetSchema` через `sheet_schema_id`.
+`SheetSchema` связан с `GameSystem` через `game_system_id`.
 
-Используемый `SheetSchema` считается неизменяемым в рамках MVP.
+Поле `schema` хранит структуру листа персонажа в формате JSONB.
+
+Используемая в MVP схема считается неизменяемой.
+
 При несовместимом изменении структуры создаётся новый `SheetSchema`.
 
-## MVP-ограничения
+`Character` продолжает ссылаться на выбранный `SheetSchema`.
 
-`SystemVersion` не входит в актуальную ERD MVP.
-Связь `GameSystem -> SystemVersion` отсутствует.
-`CharacterVersion` не содержит ссылки на `SystemVersion`.
-`CharacterVersion` не содержит отдельного автора ревизии.
+Полная модель `SystemVersion` и миграция персонажей между схемами
+не входят в MVP.
 
-Механизм миграции существующих персонажей между версиями структуры листа не входит в MVP.
-Полная модель `SystemVersion` и миграция данных относятся к post-MVP.
+## Ограничения MVP
+
+`SystemVersion` не является частью текущей ERD.
+
+Миграция существующих персонажей между версиями схемы не входит в MVP.
+
+Инвентарь и заклинания не являются частью функциональности MVP.
+
+`Schema` не является отдельной таблицей.
+
+Структура схемы хранится в `SheetSchema.schema`.
+
+`Permission` не является отдельной таблицей.
+
+Уровень доступа хранится в `CharacterShare.permission`.
 
 ## Связанные документы
 
-- [Сущности модели данных](entities.md)
-- [Связи модели данных](relationships.md)
-- [Стратегия хранения данных](storage-strategy.md)
-- [Версионирование персонажей](character-versioning.md)
+- [`entities.md`](entities.md)
+- [`relationships.md`](relationships.md)
