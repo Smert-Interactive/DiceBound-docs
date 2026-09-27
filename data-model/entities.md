@@ -1,181 +1,244 @@
-# Сущности модели данных DiceBound
+# Entities
 
-Этот документ описывает основные сущности модели данных DiceBound.
-Он является источником истины для состава сущностей,
-их полей и ограничений MVP.
-
-## Состав модели
-
-В MVP используются следующие основные сущности:
-
-- `User`
-- `GameSystem`
-- `Sheet Schema`
-- `Character`
-- `CharacterVersion`
-- `CharacterShare`
-
-Модель персонажа строится по цепочке:
-`GameSystem` → `Sheet Schema` → `Character`.
-Отдельная сущность для версии игровой системы в MVP не используется.
+Документ описывает основные сущности актуальной модели данных MVP
+DiceBound.
 
 ## User
 
-`User` представляет пользователя системы.
+### Ответственность User
 
-Основные поля:
+Представляет пользователя платформы DiceBound.
 
-| Поле | Назначение |
-| --- | --- |
-| `id` | Уникальный идентификатор пользователя |
-| `username` | Имя пользователя |
-| `email` | Электронная почта |
-| `created_at` | Время создания записи |
-| `updated_at` | Время последнего изменения записи |
+Пользователь может создавать `GameSystem` и `Character`.
+Пользователь также может получать доступ к чужим персонажам через
+`CharacterShare`.
 
-`User` является владельцем `Character` и `GameSystem`.
-`User` также может получать доступ к `Character`
-через `CharacterShare`.
+### Атрибуты User
+
+- `id`
+- `username`
+- `email`
+- `created_at`
+- `updated_at`
+
+### Ключ User
+
+Primary key: `users.id`.
+
+### Связи User
+
+На `users.id` ссылаются:
+
+- `game_systems.owner_id`;
+- `characters.owner_id`;
+- `character_shares.user_id`.
 
 ## GameSystem
 
-`GameSystem` описывает игровую систему,
-для которой создаются персонажи.
+### Ответственность GameSystem
 
-Основные поля:
+Представляет RPG-систему, используемую для создания персонажей.
 
-| Поле | Назначение |
-| --- | --- |
-| `id` | Уникальный идентификатор игровой системы |
-| `owner_id` | Ссылка на владельца `User` |
-| `name` | Название игровой системы |
-| `description` | Описание игровой системы |
-| `created_at` | Время создания записи |
-| `updated_at` | Время последнего изменения записи |
+### Атрибуты GameSystem
 
-Одна `GameSystem` может иметь несколько `Sheet Schema`.
+- `id`
+- `owner_id`
+- `name`
+- `description`
+- `created_at`
+- `updated_at`
+
+### Ключ GameSystem
+
+Primary key: `game_systems.id`.
+
+### Внешний ключ GameSystem
+
+`owner_id -> users.id`.
+
+### Связи GameSystem
+
+Один `User` может владеть несколькими `GameSystem`.
+Один `GameSystem` может иметь несколько `SheetSchema`.
+Один `GameSystem` может использоваться несколькими `Character`.
 
 ## Sheet Schema
 
-`Sheet Schema` описывает структуру листа персонажа
-для конкретной `GameSystem`.
+### Ответственность Sheet Schema
 
-Основные поля:
+Представляет структуру листа персонажа для конкретного
+`GameSystem`.
 
-| Поле | Назначение |
-| --- | --- |
-| `id` | Уникальный идентификатор схемы |
-| `game_system_id` | Ссылка на `GameSystem` |
-| `name` | Название схемы |
-| `schema` | Описание структуры листа в формате `JSONB` |
-| `created_at` | Время создания записи |
+`SheetSchema` хранит описание структуры листа в поле `schema`.
 
-`Sheet Schema` определяет структуру данных,
-которые хранятся в `Character.data`.
-`Sheet Schema` используется для валидации данных персонажа.
-После публикации и использования схема считается
-неизменяемой в рамках MVP.
-Если требуется несовместимая новая структура,
-создаётся новая `Sheet Schema`.
+### Атрибуты Sheet Schema
+
+- `id`
+- `game_system_id`
+- `name`
+- `schema`
+- `created_at`
+
+### Ключ Sheet Schema
+
+Primary key: `sheet_schemas.id`.
+
+### Внешний ключ Sheet Schema
+
+`game_system_id -> game_systems.id`.
+
+### Хранение Sheet Schema
+
+Поле `schema` имеет тип PostgreSQL `JSONB`.
+
+### Ограничения Sheet Schema
+
+Используемый `SheetSchema` считается неизменяемым в рамках MVP.
+При несовместимом изменении структуры создаётся новый
+`SheetSchema`.
 
 ## Character
 
-`Character` представляет персонажа пользователя.
+### Ответственность Character
 
-Основные поля:
+Представляет постоянную сущность персонажа.
 
-| Поле | Назначение |
-| --- | --- |
-| `id` | Уникальный идентификатор персонажа |
-| `owner_id` | Ссылка на владельца `User` |
-| `game_system_id` | Ссылка на `GameSystem` |
-| `sheet_schema_id` | Ссылка на используемую `Sheet Schema` |
-| `name` | Имя персонажа |
-| `data` | Текущее состояние листа в формате `JSONB` |
-| `created_at` | Время создания записи |
-| `updated_at` | Время последнего изменения записи |
+`Character` хранит идентичность и основные метаданные персонажа.
+Текущее состояние персонажа хранится в поле `data`.
 
-`Character.data` содержит актуальное состояние персонажа.
-Структура `Character.data` определяется связанной `Sheet Schema`.
+### Атрибуты Character
 
-История изменений хранится отдельно в `CharacterVersion`.
-Подробные правила описаны в
-[`character-versioning.md`](character-versioning.md).
+- `id`
+- `owner_id`
+- `game_system_id`
+- `sheet_schema_id`
+- `name`
+- `data`
+- `created_at`
+- `updated_at`
+
+### Ключ Character
+
+Primary key: `characters.id`.
+
+### Внешние ключи Character
+
+- `owner_id -> users.id`;
+- `game_system_id -> game_systems.id`;
+- `sheet_schema_id -> sheet_schemas.id`.
+
+### Хранение Character
+
+Поле `data` имеет тип PostgreSQL `JSONB`.
+
+### Связи Character
+
+Один `User` может владеть несколькими `Character`.
+Один `GameSystem` может использоваться несколькими `Character`.
+Один `SheetSchema` может использоваться несколькими `Character`.
+Один `Character` может иметь несколько `CharacterVersion`.
+Один `Character` может иметь несколько `CharacterShare`.
 
 ## CharacterVersion
 
-`CharacterVersion` представляет сохранённый снимок
-состояния `Character`.
+### Ответственность CharacterVersion
 
-Основные поля:
+Представляет сохранённый снимок состояния `Character`.
 
-| Поле | Назначение |
-| --- | --- |
-| `id` | Уникальный идентификатор версии |
-| `character_id` | Ссылка на `Character` |
-| `version_number` | Номер версии персонажа |
-| `data` | Полный снимок состояния в формате `JSONB` |
-| `created_at` | Время создания версии |
+`CharacterVersion` хранит полное состояние персонажа в момент
+логического сохранения.
 
-`CharacterVersion.data` хранит состояние `Character`
-на момент логического сохранения.
-Версия не содержит отдельного идентификатора автора изменения.
-Версия не содержит `system_version_id`.
-Версия не содержит комментарий изменения.
+### Атрибуты CharacterVersion
 
-Правила создания и восстановления версий описаны в
-[`character-versioning.md`](character-versioning.md).
+- `id`
+- `character_id`
+- `version_number`
+- `data`
+- `created_at`
+
+### Ключ CharacterVersion
+
+Primary key: `character_versions.id`.
+
+### Внешний ключ CharacterVersion
+
+`character_id -> characters.id`.
+
+### Хранение CharacterVersion
+
+Поле `data` имеет тип PostgreSQL `JSONB`.
+
+### Ограничения CharacterVersion
+
+Номер версии уникален в пределах одного персонажа:
+
+`UNIQUE(character_id, version_number)`.
+
+Новая версия создаётся при логическом сохранении персонажа.
+
+### Восстановление CharacterVersion
+
+При восстановлении выбранной версии более поздние версии удаляются.
+Новая `CharacterVersion` при восстановлении не создаётся.
 
 ## CharacterShare
 
-`CharacterShare` описывает доступ пользователя
-к существующему `Character`.
+### Ответственность CharacterShare
 
-Основные поля:
+Представляет предоставление доступа пользователя к `Character`.
 
-| Поле | Назначение |
-| --- | --- |
-| `id` | Уникальный идентификатор записи доступа |
-| `character_id` | Ссылка на исходный `Character` |
-| `user_id` | Ссылка на получателя доступа |
-| `permission` | Режим операции доступа |
-| `created_at` | Время создания записи |
+`CharacterShare` используется для связи `Character` с другим
+`User`.
 
-Для пары `character_id` и `user_id` действует ограничение
+### Атрибуты CharacterShare
+
+- `id`
+- `character_id`
+- `user_id`
+- `permission`
+- `created_at`
+
+### Ключ CharacterShare
+
+Primary key: `character_shares.id`.
+
+### Внешние ключи CharacterShare
+
+- `character_id -> characters.id`;
+- `user_id -> users.id`.
+
+### Ограничения CharacterShare
+
+Для одного пользователя действует одна запись доступа к персонажу:
+
 `UNIQUE(character_id, user_id)`.
 
-Режим `VIEW` предоставляет пользователю доступ
-только для чтения.
-Пользователь может просматривать текущее состояние
-персонажа и его историю.
-Пользователь не может изменять, восстанавливать
-или удалять исходный `Character`.
+### Типы доступа CharacterShare
 
-Режим `EDIT` не предоставляет право изменять
-исходный `Character`.
-При операции `EDIT` backend создаёт отдельную копию
-`Character`, принадлежащую получателю.
-Копия имеет собственные `data` и историю `CharacterVersion`.
-Изменения копии не синхронизируются
-с исходным персонажем.
+`VIEW` предоставляет доступ только к просмотру исходного
+`Character`.
 
-## Ограничения модели
+`EDIT` не предоставляет право изменять исходный `Character`.
+При `EDIT` создаётся отдельная копия `Character` для получателя.
 
-`Character` всегда связан с одной `GameSystem`
-и одной `Sheet Schema`.
-`Sheet Schema` принадлежит одной `GameSystem`.
-`CharacterVersion` принадлежит одному `Character`.
-`CharacterShare` связывает один `Character`
-с одним пользователем.
+## Общая модель
 
-В MVP нет отдельной сущности для версий `GameSystem`.
-Перенос существующего `Character` на другую
-несовместимую `Sheet Schema` не является частью MVP.
-Механизм миграции данных между схемами также
-не входит в MVP.
+Актуальная MVP-модель содержит следующие таблицы:
+
+- `User`;
+- `GameSystem`;
+- `SheetSchema`;
+- `Character`;
+- `CharacterVersion`;
+- `CharacterShare`.
+
+`SystemVersion` не входит в модель MVP.
+`Schema` является полем `SheetSchema.schema`, а не отдельной таблицей.
+`Permission` является полем `CharacterShare.permission`, а не
+отдельной таблицей.
 
 ## Связанные документы
 
-- [Связи между сущностями](relationships.md)
+- [Связи модели данных](relationships.md)
 - [Стратегия хранения данных](storage-strategy.md)
 - [Версионирование персонажей](character-versioning.md)
