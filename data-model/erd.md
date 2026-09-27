@@ -61,6 +61,7 @@ erDiagram
         uuid user_id FK
         string permission
         timestamp created_at
+    }
 ```
 
 ## Сущности
