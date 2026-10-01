@@ -153,5 +153,5 @@ GameSystem
 ## Связанные документы
 
 - [Сущности модели данных](entities.md)
-- [Стратегия хранения данных](storage-strategy.md)
-- [Версионирование персонажей](character-versioning.md)
+- [ERD DiceBound](erd.md)
+- [SheetSchema and Character Data](sheet-schema.md)
