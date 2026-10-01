@@ -240,5 +240,5 @@ Primary key: `character_shares.id`.
 ## Связанные документы
 
 - [Связи модели данных](relationships.md)
-- [Стратегия хранения данных](storage-strategy.md)
-- [Версионирование персонажей](character-versioning.md)
+- [ERD DiceBound](erd.md)
+- [SheetSchema and Character Data](sheet-schema.md)
