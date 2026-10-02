@@ -4,18 +4,30 @@
 `Character.data` для schema-driven архитектуры DiceBound.
 Формат не зависит от конкретной игровой системы.
 
-`SheetSchema` хранится в `sheet_schemas.schema` типа JSONB.
-`Character.data` хранит значения полей в формате JSONB.
+`SheetSchema` хранится в таблице `sheet_schemas`.
+Поле `schema` имеет тип PostgreSQL `JSONB`.
+`Character.data` хранит текущее состояние персонажа в формате JSONB.
+`CharacterVersion.data` хранит полный снимок состояния при сохранении.
 
 ## SheetSchema
 
-`SheetSchema` содержит `version`, `name` и список секций.
-Секция содержит поля с уникальными `id`.
+`SheetSchema` связывает `GameSystem` с `Character`.
+В MVP `SheetSchema` содержит:
+
+- `id`;
+- `game_system_id`;
+- `name`;
+- `schema`;
+- `created_at`.
+
+Поле `schema` содержит описание структуры листа.
+Опубликованная используемая `SheetSchema` неизменяема в MVP.
+Несовместимое изменение структуры требует создания новой `SheetSchema`.
+
+Пример значения `SheetSchema.schema`:
 
 ```json
 {
-  "version": 1,
-  "name": "D&D 5e",
   "sections": [
     {
       "id": "abilities",
@@ -157,26 +169,7 @@
   "id": "strength_modifier",
   "type": "calculated",
   "label": "Strength modifier",
-  "formula": {
-    "op": "floor",
-    "args": [
-      {
-        "op": "div",
-        "args": [
-          {
-            "op": "sub",
-            "args": [
-              {
-                "ref": "strength"
-              },
-              10
-            ]
-          },
-          2
-        ]
-      }
-    ]
-  }
+  "formula": "floor((strength - 10) / 2)"
 }
 ```
 
@@ -220,39 +213,32 @@
 ## Formula Engine
 
 Formula Engine вычисляет поля типа `calculated`.
-Формула содержит `op` и массив `args`.
-Ссылка на другое поле задаётся через `ref`.
-
-```json
-{
-  "op": "add",
-  "args": [
-    {
-      "ref": "strength"
-    },
-    2
-  ]
-}
-```
+Формула хранится как ограниченное выражение.
+Ссылки на поля задаются через `field.id`.
 
 Поддерживаются:
 
-- `add`, `sub`, `mul`, `div`, `mod`;
-- `eq`, `ne`, `gt`, `gte`, `lt`, `lte`;
-- `and`, `or`, `not`;
-- `min`, `max`, `abs`;
-- `floor`, `ceil`, `round`;
-- `if`.
+- `+`;
+- `-`;
+- `*`;
+- `/`;
+- `()`;
+- `floor`;
+- `ceil`;
+- `round`;
+- `min`;
+- `max`.
 
-Арифметические операции работают с числами.
-Операции сравнения возвращают boolean.
-`and`, `or` и `not` работают с boolean.
-`if` принимает условие и два результата.
-
-Formula Engine не выполняет произвольный код.
-Ссылка на неизвестное поле является ошибкой.
+Произвольный JavaScript и `eval()` не выполняются.
+Неизвестное поле является ошибкой.
 Деление на ноль является ошибкой.
-Циклическая зависимость является ошибкой валидации.
+Циклическая зависимость является ошибкой.
+
+Пример формулы:
+
+```text
+floor((strength - 10) / 2)
+```
 
 ## Сохранение Character
 
@@ -264,14 +250,16 @@ Formula Engine не выполняет произвольный код.
 4. обновляет `Character.data`;
 5. создаёт новый `CharacterVersion`.
 
+Версия создаётся при логическом сохранении, а не при каждом
+изменении поля.
 `CharacterVersion.data` содержит полный снимок результата сохранения.
 
 ## Пример D&D 5e
 
+Пример значения `SheetSchema.schema`:
+
 ```json
 {
-  "version": 1,
-  "name": "D&D 5e",
   "sections": [
     {
       "id": "basic",
@@ -289,6 +277,12 @@ Formula Engine не выполняет произвольный код.
           "label": "Strength",
           "min": 1,
           "max": 30
+        },
+        {
+          "id": "strength_modifier",
+          "type": "calculated",
+          "label": "Strength modifier",
+          "formula": "floor((strength - 10) / 2)"
         },
         {
           "id": "class",
@@ -317,16 +311,23 @@ Formula Engine не выполняет произвольный код.
 {
   "name": "Arin",
   "strength": 16,
+  "strength_modifier": 3,
   "class": "fighter"
 }
 ```
 
+Для `strength = 16` Formula Engine вычисляет:
+
+```text
+floor((16 - 10) / 2) = 3
+```
+
 ## Пример Call of Cthulhu
+
+Пример значения `SheetSchema.schema`:
 
 ```json
 {
-  "version": 1,
-  "name": "Call of Cthulhu",
   "sections": [
     {
       "id": "basic",
@@ -376,8 +377,6 @@ Formula Engine не выполняет произвольный код.
 
 ```json
 {
-  "version": 1,
-  "name": "My RPG",
   "sections": [
     {
       "id": "basic",
@@ -405,23 +404,36 @@ Formula Engine не выполняет произвольный код.
 Она может использоваться для создания `Character`.
 Значения хранятся в `Character.data` по тем же `field.id`.
 
-## Ограничения
+## Ограничения MVP
 
-`SheetSchema` считается неизменяемой после публикации в MVP.
-Несовместимое изменение требует создания нового `SheetSchema`.
+`SheetSchema` неизменяема после публикации.
+Несовместимое изменение структуры требует создания новой
+`SheetSchema`.
 
-Перенос `Character` между несовместимыми схемами не входит в MVP.
+`Character` всегда ссылается на конкретную `SheetSchema` через
+`sheet_schema_id`.
+
 `SystemVersion` не используется в текущей MVP-модели.
+Миграция существующих `Character` между несовместимыми схемами
+не входит в MVP.
+Migration engine относится к post-MVP.
+
+JSONB используется в:
+
+- `SheetSchema.schema`;
+- `Character.data`;
+- `CharacterVersion.data`.
+
 Инвентарь и заклинания не входят в функциональность MVP.
 
 ## Связь с моделью данных
 
 `GameSystem` может иметь несколько `SheetSchema`.
-`Character` ссылается на конкретный `SheetSchema` через
-`sheet_schema_id`.
+`Character` ссылается на `GameSystem` через `game_system_id`.
+`Character` ссылается на `SheetSchema` через `sheet_schema_id`.
 
-`SheetSchema.schema` описывает структуру.
-`Character.data` хранит значения.
+`SheetSchema.schema` описывает структуру листа.
+`Character.data` хранит текущее состояние персонажа.
 `CharacterVersion.data` хранит снимок данных при сохранении.
 
 Подробнее см. [entities.md](entities.md).
