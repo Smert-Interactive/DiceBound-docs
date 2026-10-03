@@ -1,7 +1,8 @@
 # Continuous Integration
 
 Документ описывает CI для `DiceBound-backend` и `DiceBound-frontend`.
-Он фиксирует условия запуска workflow, выполняемые проверки, required status checks и требования для merge в `main`.
+Он фиксирует условия запуска workflow, выполняемые проверки, required status
+checks и требования для merge в `main`.
 
 ## Запуск CI
 
@@ -104,8 +105,9 @@ frontend-ci
 Required status check должен завершиться успешно перед обычным merge Pull Request.
 
 Strict status checks policy отключена.
-Ruleset не требует предварительно обновлять branch относительно последнего состояния `main`
-только для повторного выполнения required status check.
+Ruleset не требует предварительно обновлять branch относительно
+последнего состояния `main` только для повторного выполнения
+required status check.
 
 ## Требования для merge
 
@@ -126,7 +128,8 @@ Ruleset запрещает удаление `main` и non-fast-forward updates.
 
 ## Диагностика падения CI
 
-Откройте неуспешный workflow в GitHub Actions или Checks Pull Request и найдите первый
+Откройте неуспешный workflow в GitHub Actions или Checks Pull Request
+и найдите первый
 step со статусом failure.
 
 Основные steps соответствуют локальным командам:
@@ -166,8 +169,8 @@ npm run build
 Если падает `Lint`, `Test` или `Build`, воспроизведите соответствующую команду локально
 и исправьте ошибку.
 
-Статус `cancelled` после нового push может быть результатом работы `concurrency`, поскольку
-предыдущий незавершённый запуск автоматически отменяется.
+Статус `cancelled` после нового push может быть результатом работы `concurrency`,
+поскольку предыдущий незавершённый запуск автоматически отменяется.
 
 Повторный запуск workflow не заменяет исправление ошибок lint, tests или build.
 
