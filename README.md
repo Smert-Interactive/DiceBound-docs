@@ -9,5 +9,7 @@
 - [Технические контракты](./technical-contracts.md) — `Sheet Schema`,
   модель данных и API.
 - [Дизайн DiceBound в Figma][figma] — актуальные макеты интерфейса.
+- [Continuous Integration](./ci.md) — запуск CI, проверки,
+  required status checks и условия merge.
 
 [figma]: https://www.figma.com/design/x7TCZBlTPGuzM1MxrPfq4g/DiceBound-Design
